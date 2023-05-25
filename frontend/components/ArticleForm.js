@@ -1,20 +1,27 @@
 import React, { useEffect, useState } from 'react'
 import PT from 'prop-types'
-import { axiosAuth } from '../axios'
 
 const initialFormValues = { title: '', text: '', topic: '' }
 
 export default function ArticleForm(props) {
   const [values, setValues] = useState(initialFormValues)
   // ✨ where are my props? Destructure them here
-  const { setMessage } = props;
+  const { articles, getArticles, currentArticleID, setCurrentArticleId, postArticle, updateArticle } = props;                                                   
 
   useEffect(() => {
     // ✨ implement
     // Every time the `currentArticle` prop changes, we should check it for truthiness:
     // if it's truthy, we should set its title, text and topic into the corresponding
     // values of the form. If it's not, we should reset the form back to initial values.
-  })
+    // setValues({title: 'brad', text: 'was here', topic: 'JavaScript'})
+
+    const currentArticle = articles.filter((article) => article.article_id === currentArticleID)
+
+    if (currentArticleID != undefined) {
+      setValues(currentArticle[0])
+    }
+
+  },[currentArticleID])
 
   const onChange = evt => {
     const { id, value } = evt.target
@@ -27,25 +34,22 @@ export default function ArticleForm(props) {
     // We must submit a new post or update an existing one,
     // depending on the truthyness of the `currentArticle` prop.
 
-    axiosAuth()
-      .post('http://localhost:9000/api/articles', values)
-        .then((res) => {
-          console.log(res.data);
-          setMessage(res.data.message);
-          setValues(initialFormValues);
-        })
-        .then((err) => console.error)
+    if (currentArticleID === undefined) {
+      postArticle(values)
+    } else updateArticle(currentArticleID, values)
 
+    setValues(initialFormValues);        
+  }
+
+  const cancelEdit = () => {
+    setValues(initialFormValues);
+    setCurrentArticleId()
   }
 
   const isDisabled = () => {
-    // ✨ implement
-    // Make sure the inputs have some values
-
     if (values.title.trim().length != 0 && values.text.trim().length != 0 && values.topic.length != 0) {
       return false;
     } else return true;
-
   }
 
   return (
@@ -73,10 +77,17 @@ export default function ArticleForm(props) {
         <option value="React">React</option>
         <option value="Node">Node</option>
       </select>
-      <div className="button-group">
-        <button disabled={isDisabled()} id="submitArticle">Submit</button>
-        <button onClick={Function.prototype}>Cancel edit</button>
-      </div>
+      {
+        currentArticleID === undefined ? 
+        <div className="button-group">
+          <button disabled={isDisabled()} id="submitArticle">Submit</button>
+        </div>
+        :
+        <div className="button-group">
+          <button disabled={isDisabled()} id="updateArticle">Submit</button>
+          <button id="cancelEdit" onClick={() => cancelEdit()}>Cancel edit</button>
+       </div>
+      }
     </form>
   )
 }

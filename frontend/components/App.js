@@ -25,25 +25,13 @@ export default function App() {
   const redirectToArticles = () => { /* ✨ implement */ navigate('/articles')}
 
   const logout = () => {
-    // ✨ implement
-    // If a token is in local storage it should be removed,
-    // and a message saying "Goodbye!" should be set in its proper state.
-    // In any case, we should redirect the browser back to the login screen,
-    // using the helper above.
-
-    setMessage('Goodbye!')
-    localStorage.removeItem('token')
+    setMessage('Goodbye!');
+    localStorage.removeItem('token');
+    setCurrentArticleId();
     redirectToLogin();
   }
 
   const login = ({ username, password }) => {
-    // ✨ implement
-    // We should flush the message state, turn on the spinner
-    // and launch a request to the proper endpoint.
-    // On success, we should set the token to local storage in a 'token' key,
-    // put the server success message in its proper state, and redirect
-    // to the Articles screen. Don't forget to turn off the spinner!
-    
     setSpinnerOn(true);
 
     axios.post(loginUrl, { username, password })
@@ -57,55 +45,64 @@ export default function App() {
   }
 
   const getArticles = () => {
-    // ✨ implement
-    // We should flush the message state, turn on the spinner
-    // and launch an authenticated request to the proper endpoint.
-    // On success, we should set the articles in their proper state and
-    // put the server success message in its proper state.
-    // If something goes wrong, check the status of the response:
-    // if it's a 401 the token might have gone bad, and we should redirect to login.
-    // Don't forget to turn off the spinner!
+    setSpinnerOn(true)
     axiosAuth().get(articlesUrl)
         .then((res) => {
-          console.log(res.data)
-          setMessage(res.data.message);
+          if(message === '') {
+            setMessage(res.data.message);
+          }
           setArticles(res.data.articles);
-          setSpinnerOn(false);
+          setSpinnerOn(false);  
         })
-        .catch((err) => console.err)
-
+        .catch((err) => console.err)   
   }
 
   const postArticle = article => {
-    // ✨ implement
-    // The flow is very similar to the `getArticles` function.
-    // You'll know what to do! Use log statements or breakpoints
-    // to inspect the response from the server.
+      axiosAuth()
+      .post(articlesUrl, article)
+        .then((res) => {
+          setMessage(res.data.message);
+          getArticles();
+          
+        })
+        .then((err) => console.error)
   }
 
-  const updateArticle = ({ article_id, article }) => {
+  const updateArticle = (currentArticleId, values) => {
     // ✨ implement
     // You got this!
+
+    // MY NOTES
+    // set values based on currentArticleID
+    // pass these values down to form
+
+    axiosAuth()
+    .put(`${articlesUrl}/${currentArticleId}`, values)
+      .then((res) => {
+        setMessage(res.data.message);
+        getArticles();
+        
+      })
+      .then((err) => console.error)
+    
   }
 
   const deleteArticle = article_id => {
-    // ✨ implement
-
     axiosAuth()
       .delete(articlesUrl + '/' + article_id)
         .then((res => {
-          console.log(res)
+          getArticles();
           setMessage(res.data.message)
-          console.log(message)
         }))
         .catch((err) => console.error)
-  
   }
+
+  console.log(currentArticleId)
 
   return (
     // ✨ fix the JSX: `Spinner`, `Message`, `LoginForm`, `ArticleForm` and `Articles` expect props ❗
     <>
-      <Spinner />
+      <Spinner on={spinnerOn}/>
       <Message message={message} />
       <button id="logout" onClick={logout}>Logout from app</button>
       <div id="wrapper" style={{ opacity: spinnerOn ? "0.25" : "1" }}> {/* <-- do not change this line */}
@@ -119,8 +116,9 @@ export default function App() {
           
           <Route path="articles" element={
             <PrivateRoutes>
-              <ArticleForm setMessage={setMessage}/>
-              <Articles articles={articles} id={currentArticleId} getArticles={getArticles} deleteArticle={deleteArticle} />
+              <ArticleForm postArticle={postArticle} articles={articles} getArticles={getArticles} currentArticleID={currentArticleId} setCurrentArticleId={setCurrentArticleId} updateArticle={updateArticle} />
+              <Articles articles={articles} deleteArticle={deleteArticle} getArticles={getArticles} setCurrentArticleId={setCurrentArticleId}
+              currentArticleID={currentArticleId} />
             </PrivateRoutes>
           } />
         </Routes>
