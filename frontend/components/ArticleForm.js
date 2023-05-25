@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import PT from 'prop-types'
+import { axiosAuth } from '../axios'
 
 const initialFormValues = { title: '', text: '', topic: '' }
 
 export default function ArticleForm(props) {
   const [values, setValues] = useState(initialFormValues)
   // ✨ where are my props? Destructure them here
+  const { setMessage } = props;
 
   useEffect(() => {
     // ✨ implement
@@ -24,11 +26,26 @@ export default function ArticleForm(props) {
     // ✨ implement
     // We must submit a new post or update an existing one,
     // depending on the truthyness of the `currentArticle` prop.
+
+    axiosAuth()
+      .post('http://localhost:9000/api/articles', values)
+        .then((res) => {
+          console.log(res.data);
+          setMessage(res.data.message);
+          setValues(initialFormValues);
+        })
+        .then((err) => console.error)
+
   }
 
   const isDisabled = () => {
     // ✨ implement
     // Make sure the inputs have some values
+
+    if (values.title.trim().length != 0 && values.text.trim().length != 0 && values.topic.length != 0) {
+      return false;
+    } else return true;
+
   }
 
   return (
